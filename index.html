@@ -34,14 +34,14 @@
                 
                 // scaling factors to fit data into our SVG window of h * w
                 var width = w / data.length;                                    // to fit each bar+padding.
-                var maxHeight = data.reduce(function(soFar, item){              // for each item in data, call function
-                                    return Math.max(item.Deliciousness, soFar); // to compare value to max so far
-                                }, 0);                                          // - initial value for soFar is 0.
-                var heightScaling = h / maxHeight;                              // giving us our vertical scaling factor
+                var maxHeight = data.reduce(function(soFar, item){              // for each item in data, call function ...
+                                    return Math.max(item.Deliciousness, soFar); // ... to compare value to max so far
+                                }, 0);                                          // ... (initial value for soFar is 0)
+                var heightScaling = h / maxHeight;                              // ... giving us our vertical scaling factor.
                 
                 var bars = svg.selectAll('rect')                                // find all svg/rect ...
-                    .data(data)                                                 // ... and all data items ...
-                    .enter()                                                    // ... and for all unmatched items...
+                    .data(data)                                                 // ... and all data items 
+                    .enter()                                                    // ... and for all unmatched items
                     .append('rect');                                            // ... create a new, matching svg/rect.
                 
                 bars.attr('x', function(d, i){                                  // for each bar, set x ...
@@ -55,6 +55,32 @@
                     })
                     .attr('width', width - padding)                             // ... and have the right width.
                     .attr('fill', 'teal');
+                    
+                                    var bars = svg.selectAll('rect')                                // find all svg/rect ...
+                    .data(data)                                                 // ... and all data items 
+                    .enter()                                                    // ... and for all unmatched items
+                    .append('rect');                                            // ... create a new, matching svg/rect.
+                
+                var labels = svg.selectAll('text')                                // find all svg/text ...
+                    .data(data)                                                 // ... and all data items 
+                    .enter()                                                    // ... and for all unmatched items
+                    .append('text');                                            // ... create a new, matching svg/text.
+                
+                labels.attr('x', function(d, i){                                  // for each label, set x ...
+                        return (i * (width) + (width / 2));
+                    })
+                    .attr('y', function(d){                                     // ... and y. Flip y as before ...
+                        return Math.min(h-15, h + 15 - (heightScaling * d.Deliciousness));
+                    })
+                    .text(function(d){                                          // ... and set the label text ...
+                        return d.Food;
+                    })
+                    .attr('width', width - padding)                             // ... and have the right width.
+                    .attr('font-family', 'sans-serif')
+                    .attr('font-size', '11px')
+                    .attr('fill', 'red')
+                    .attr('text-anchor', 'middle');
+
             }
         </script>
     </body>
