@@ -15,45 +15,47 @@
     </head>
     <body>
         <script type="text/javascript">
-            var h = 50;
+            var h = 100;
             var w = 500;
-            
+            var padding = 1;
+
             var svg = d3.select('body')
                         .append('svg')
                         .attr('width', w)
                         .attr('height', h);
-            var dataset;
-            d3.csv("data/fruit.csv", function(data){
+                        
+
+            // fetch the csv file and generate SVG in the callback
+            d3.csv("data/fruit.csv", pictureThis);
+
+            // callback to generate SVG barchart
+            function pictureThis(data){
                 console.log(data);
-                dataset = data;
-                var circles = svg.selectAll('circle')
-                    .data(dataset)
-                    .enter()
-                    .append('circle');
                 
-                circles.attr('cx', function(d, i){
-                        return (i * 50) + 25;
+                // scaling factors to fit data into our SVG window of h * w
+                var width = w / data.length;                                    // to fit each bar+padding.
+                var maxHeight = data.reduce(function(soFar, item){              // for each item in data, call function
+                                    return Math.max(item.Deliciousness, soFar); // to compare value to max so far
+                                }, 0);                                          // - initial value for soFar is 0.
+                var heightScaling = h / maxHeight;                              // giving us our vertical scaling factor
+                
+                var bars = svg.selectAll('rect')                                // find all svg/rect ...
+                    .data(data)                                                 // ... and all data items ...
+                    .enter()                                                    // ... and for all unmatched items...
+                    .append('rect');                                            // ... create a new, matching svg/rect.
+                
+                bars.attr('x', function(d, i){                                  // for each bar, set x ...
+                        return (i * (width));
                     })
-                    .attr('cy', h / 2)
-                    .attr('r', function(d){
-                        return d.Deliciousness;
+                    .attr('y', function(d){                                     // ... and y. But SVG uses top-left origin ...
+                        return h - (heightScaling * d.Deliciousness);           // ... so we adjust for bottom-left chart origin ...
                     })
-                    .attr('fill', 'yellow')
-                    .attr('stroke', 'orange')
-                    .attr('stroke-width', function(d){
-                        return d.Deliciousness / 2;
-                    });
-                /*
-                d3.select('body').selectAll('div')
-                    .data(dataset)
-                    .enter()
-                    .append('div')
-                    .attr('class', 'bar')
-                    .style('height', function(d){
-                        return d.Deliciousness * 5 + 'px';
-                    });
-                */
-            });
+                    .attr('height', function(d){                                // ... so that all bars are bottom-aligned...
+                        return heightScaling * d.Deliciousness;
+                    })
+                    .attr('width', width - padding)                             // ... and have the right width.
+                    .attr('fill', 'teal');
+            }
         </script>
     </body>
 </html>
