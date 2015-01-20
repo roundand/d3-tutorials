@@ -55,12 +55,7 @@
                     })
                     .attr('width', width - padding)                             // ... and have the right width.
                     .attr('fill', 'teal');
-                    
-                                    var bars = svg.selectAll('rect')                                // find all svg/rect ...
-                    .data(data)                                                 // ... and all data items 
-                    .enter()                                                    // ... and for all unmatched items
-                    .append('rect');                                            // ... create a new, matching svg/rect.
-                
+
                 var labels = svg.selectAll('text')                                // find all svg/text ...
                     .data(data)                                                 // ... and all data items 
                     .enter()                                                    // ... and for all unmatched items
