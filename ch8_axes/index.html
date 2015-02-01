@@ -1,0 +1,119 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>D3 Page Template</title>
+    <script type="text/javascript" src="d3/d3.js"></script>
+    <style>
+      .axis path,
+      .axis line {
+          fill: none;
+          stroke: black;
+          shape-rendering: crispEdges;
+      }
+      
+      .axis text {
+          font-family: sans-serif;
+          font-size: 10px;
+      }
+      div.bar {
+        display: inline-block;
+        width: 20px;
+        height: 75px;   /* We'll override height later */
+        background-color: teal;
+        margin-right: 2px;
+      }
+      </style>
+  </head>
+  <body>
+    <script type="text/javascript">
+      var h = 100;
+      var w = 500;
+      var padding = 10;
+      var barPadding = 1;
+      var axisWidth = 25;
+      
+      var svg = d3.select('body')
+                  .append('svg')
+                  .attr('width', w)
+                  .attr('height', h + padding);
+      
+      
+      // fetch the csv file and generate SVG in the callback
+      d3.csv("data/fruit.csv", pictureThis);
+      
+      // callback to generate SVG barchart
+      function pictureThis(data){
+        console.log(data);
+        
+        // scaling factors to fit data into our SVG window of h * w
+        var width = (w - (barPadding + axisWidth)) / data.length;       // to fit each bar+barPadding.
+        var maxData = d3.max(data, function(d){                         // use the convenient d3.max function ...
+          return +d.Deliciousness;                                      // ... remembering to convert the string value.
+        });
+        console.log('maxData: ' + maxData);
+        
+        var maxScale = h - (2 * padding);
+        console.log('maxScale: ' + maxScale);
+
+        var yScale = d3.scale.linear()
+                       .domain([0, maxData])
+                       .range([0, maxScale]);
+        
+        var yAxisScale = d3.scale.linear()
+                       .domain([0, maxData])
+                       .range([maxScale, 0]);
+        
+        var bars = svg.selectAll('rect')                                // find all svg/rect ...
+                      .data(data)                                       // ... and all data items 
+                      .enter()                                          // ... and for all unmatched items
+                      .append('rect');                                  // ... create a new, matching svg/rect.
+        
+        bars.attr('x', function(d, i){                                  // for each bar, set x ...
+              return (barPadding + axisWidth + (i * (width)));
+            })
+            .attr('y', function(d){                                     // ... and y. But SVG uses top-left origin ...
+              return padding + yAxisScale(+d.Deliciousness);                      // ... so we adjust for bottom-left chart origin ...
+            })
+            .attr('height', function(d){                                // ... so that all bars are bottom-aligned...
+              var height = yScale(+d.Deliciousness);
+              console.log(d.Deliciousness + ' -> ' + height)
+              return height;
+            })
+            .attr('width', width - barPadding)                          // ... and have the right width.
+            .attr('fill', 'teal');
+        
+        var labels = svg.selectAll('text')                              // find all svg/text ...
+                        .data(data)                                     // ... and all data items 
+                        .enter()                                        // ... and for all unmatched items
+                        .append('text');                                // ... create a new, matching svg/text.
+        
+        labels.attr('x', function(d, i){                                // for each label, set x ...
+                return ((axisWidth) + (i * (width) + (width / 2)));
+              })
+                .attr('y', function(d){                                 // ... and y. Flip y as before ...
+                return Math.min(h - padding, padding + yAxisScale(d.Deliciousness));
+              })
+              .text(function(d){                                        // ... and set the label text ...
+                return d.Food;
+              })
+              .attr('width', width - barPadding)                        // ... and have the right width.
+              .attr('font-family', 'sans-serif')
+              .attr('font-size', '11px')
+              .attr('fill', 'red')
+              .attr('text-anchor', 'middle');
+              
+        // let's add a vertical axis
+        var yAxis = d3.svg.axis();
+        yAxis.scale(yAxisScale);
+        yAxis.orient('left');
+        yAxis.ticks(5);
+        
+        svg.append('g')
+            .attr('class', 'axis')
+            .attr('transform', 'translate(' + axisWidth + ', ' + padding + ')')
+            .call(yAxis);
+        
+      }
+    </script>
+  </body>
+</html>
