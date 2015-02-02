@@ -47,6 +47,11 @@
         
         // scaling factors to fit data into our SVG window of h * w
         var width = (w - (barPadding + axisWidth)) / data.length;       // to fit each bar+barPadding.
+        var xScale = d3.scale.ordinal()                                 // horizontal scale using ordinal categories ...
+                      .domain(data.map(function(d){                     // ... map array of objects with properties...
+                        return d.Food;                                  // ... to an array of Food property values
+                      }))
+                      .rangeRoundBands([axisWidth, w], 0.05);
         var maxData = d3.max(data, function(d){                         // use the convenient d3.max function ...
           return +d.Deliciousness;                                      // ... remembering to convert the string value.
         });
@@ -69,7 +74,8 @@
                       .append('rect');                                  // ... create a new, matching svg/rect.
         
         bars.attr('x', function(d, i){                                  // for each bar, set x ...
-              return (barPadding + axisWidth + (i * (width)));
+//              return (barPadding + axisWidth + (i * (width)));
+                return xScale(d.Food);
             })
             .attr('y', function(d){                                     // ... and y. But SVG uses top-left origin ...
               return padding + yAxisScale(+d.Deliciousness);                      // ... so we adjust for bottom-left chart origin ...
@@ -79,7 +85,7 @@
               console.log(d.Deliciousness + ' -> ' + height)
               return height;
             })
-            .attr('width', width - barPadding)                          // ... and have the right width.
+            .attr('width', xScale.rangeBand())                          // ... and have the right width.
             .attr('fill', 'teal');
         
         var labels = svg.selectAll('text')                              // find all svg/text ...
