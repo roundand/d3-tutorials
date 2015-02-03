@@ -152,7 +152,8 @@
                        .range([maxScale, 0]);
         
         var bars = svg.selectAll('rect')                                // find all svg/rect ...
-                      .data(data)                                       // ... and all data items 
+                      .data(data)                                       // ... and all data items ...
+                      .transition();                                    // ... and keep it smooth
 
         bars.attr('x', function(d, i){                                  // for each bar, set x ...
                 return xScale(d.Food);
@@ -167,7 +168,8 @@
             })
 
         var labels = svg.selectAll('text')                              // find all svg/text ...
-                        .data(data)                                     // ... and all data items 
+                        .data(data)                                     // ... and all data items ...
+                        .transition();
 
         labels.attr('x', function(d, i){                                // for each label, set x ...
                 return (xScale(d.Food) + xScale.rangeBand() / 2);       // ... allowing for label centering ...
@@ -178,6 +180,16 @@
               .text(function(d){                                        // ... and set the label text ...
                 return d.Food;
               })
+              
+        // let's add a vertical axis
+        var yAxis = d3.svg.axis();
+        yAxis.scale(yAxisScale);
+        yAxis.orient('left');
+        yAxis.ticks(5);
+        
+        d3.select('g')
+            .call(yAxis);
+              
       }
       
       function updateData(data){
