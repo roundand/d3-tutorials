@@ -25,11 +25,14 @@
       </style>
   </head>
   <body>
+    <p>Don't click here!</p>
     <script type="text/javascript">
       var h = 100;
       var w = 500;
       var padding = 10;
       var axisWidth = 25;
+      
+      var dataSet = [];
       
       var svg = d3.select('body')
                   .append('svg')
@@ -42,6 +45,7 @@
       
       // callback to generate SVG barchart
       function pictureThis(data){
+        dataSet = data;
         console.log(data);
         
         // scaling factors to fit data into our SVG window of h * w
@@ -49,7 +53,7 @@
                       .domain(data.map(function(d){                     // ... map array of objects with properties...
                         return d.Food;                                  // ... to an array of Food property values
                       }))
-                      .rangeRoundBands([axisWidth, w], 0.05);
+                      .rangeRoundBands([axisWidth, w], 0.01);
         var maxData = d3.max(data, function(d){                         // use the convenient d3.max function ...
           return +d.Deliciousness;                                      // ... remembering to convert the string value.
         });
@@ -116,6 +120,72 @@
             .attr('transform', 'translate(' + axisWidth + ', ' + padding + ')')
             .call(yAxis);
         
+      }
+      
+      // and let's have a little interaction
+      var p = d3.select('p');
+      console.log('p: ' + p);
+      p.on('click', updateGraph);
+      
+      function updateGraph(){
+        var data = updateData(dataSet);
+        // scaling factors to fit data into our SVG window of h * w
+        var xScale = d3.scale.ordinal()                                 // horizontal scale using ordinal categories ...
+                      .domain(data.map(function(d){                     // ... map array of objects with properties...
+                        return d.Food;                                  // ... to an array of Food property values
+                      }))
+                      .rangeRoundBands([axisWidth, w], 0.01);
+        var maxData = d3.max(data, function(d){                         // use the convenient d3.max function ...
+          return +d.Deliciousness;                                      // ... remembering to convert the string value.
+        });
+        console.log('maxData: ' + maxData);
+        
+        var maxScale = h - (2 * padding);
+        console.log('maxScale: ' + maxScale);
+
+        var yScale = d3.scale.linear()
+                       .domain([0, maxData])
+                       .range([0, maxScale]);
+        
+        var yAxisScale = d3.scale.linear()
+                       .domain([0, maxData])
+                       .range([maxScale, 0]);
+        
+        var bars = svg.selectAll('rect')                                // find all svg/rect ...
+                      .data(data)                                       // ... and all data items 
+
+        bars.attr('x', function(d, i){                                  // for each bar, set x ...
+                return xScale(d.Food);
+            })
+            .attr('y', function(d){                                     // ... and y. But SVG uses top-left origin ...
+              return padding + yAxisScale(+d.Deliciousness);                      // ... so we adjust for bottom-left chart origin ...
+            })
+            .attr('height', function(d){                                // ... so that all bars are bottom-aligned...
+              var height = yScale(+d.Deliciousness);
+              console.log(d.Deliciousness + ' -> ' + height)
+              return height;
+            })
+
+        var labels = svg.selectAll('text')                              // find all svg/text ...
+                        .data(data)                                     // ... and all data items 
+
+        labels.attr('x', function(d, i){                                // for each label, set x ...
+                return (xScale(d.Food) + xScale.rangeBand() / 2);       // ... allowing for label centering ...
+              })
+                .attr('y', function(d){                                 // ... and y. Flip y as before ...
+                return Math.min(h - padding, padding + yAxisScale(d.Deliciousness));
+              })
+              .text(function(d){                                        // ... and set the label text ...
+                return d.Food;
+              })
+      }
+      
+      function updateData(data){
+        var newData = [];
+        data.forEach(function(d){
+          this.push({Food : d.Food, Deliciousness : Math.random() * 10})
+        }, newData);
+        return newData;
       }
     </script>
   </body>
