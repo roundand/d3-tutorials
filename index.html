@@ -29,7 +29,6 @@
       var h = 100;
       var w = 500;
       var padding = 10;
-      var barPadding = 1;
       var axisWidth = 25;
       
       var svg = d3.select('body')
@@ -46,7 +45,6 @@
         console.log(data);
         
         // scaling factors to fit data into our SVG window of h * w
-        var width = (w - (barPadding + axisWidth)) / data.length;       // to fit each bar+barPadding.
         var xScale = d3.scale.ordinal()                                 // horizontal scale using ordinal categories ...
                       .domain(data.map(function(d){                     // ... map array of objects with properties...
                         return d.Food;                                  // ... to an array of Food property values
@@ -74,7 +72,6 @@
                       .append('rect');                                  // ... create a new, matching svg/rect.
         
         bars.attr('x', function(d, i){                                  // for each bar, set x ...
-//              return (barPadding + axisWidth + (i * (width)));
                 return xScale(d.Food);
             })
             .attr('y', function(d){                                     // ... and y. But SVG uses top-left origin ...
@@ -94,7 +91,7 @@
                         .append('text');                                // ... create a new, matching svg/text.
         
         labels.attr('x', function(d, i){                                // for each label, set x ...
-                return ((axisWidth) + (i * (width) + (width / 2)));
+                return (xScale(d.Food) + xScale.rangeBand() / 2);       // ... allowing for label centering ...
               })
                 .attr('y', function(d){                                 // ... and y. Flip y as before ...
                 return Math.min(h - padding, padding + yAxisScale(d.Deliciousness));
@@ -102,7 +99,7 @@
               .text(function(d){                                        // ... and set the label text ...
                 return d.Food;
               })
-              .attr('width', width - barPadding)                        // ... and have the right width.
+              .attr('width', xScale.rangeBand())                        // ... and have the right width.
               .attr('font-family', 'sans-serif')
               .attr('font-size', '11px')
               .attr('fill', 'red')
