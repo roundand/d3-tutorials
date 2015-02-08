@@ -81,20 +81,8 @@
             .enter()                                                    // ... and for all unmatched items
             .append('text');                                            // ... create a new, matching svg/text.
         
-        labels.attr('x', function(d, i){                                // for each label, set x ...
-                return (xScale(d.Food) + xScale.rangeBand() / 2);       // ... allowing for label centering ...
-              })
-                .attr('y', function(d){                                 // ... and y. Flip y as before ...
-                return Math.min(h - padding, padding + yAxisScale(d.Deliciousness));
-              })
-              .text(function(d){                                        // ... and set the label text ...
-                return d.Food;
-              })
-              .attr('width', xScale.rangeBand())                        // ... and have the right width.
-              .attr('font-family', 'sans-serif')
-              .attr('font-size', '11px')
-              .attr('fill', 'red')
-              .attr('text-anchor', 'middle');
+        labels.call(updateLabels, xScale, yAxisScale, yScale)           // ... dynamic attributes
+            .call(setupLabels, xScale, yAxisScale, yScale);             // ... static attributes
               
         // let's add a vertical axis
         var yAxis = d3.svg.axis();
@@ -167,19 +155,14 @@
         // enter
         labels.enter()
             .append('text')                                             // ... create a new, matching svg/text.
-            .call(updateLabels, xScale, yAxisScale, yScale)
-            .attr('width', xScale.rangeBand())                          // ... and have the right width.
-            .attr('font-family', 'sans-serif')
-            .attr('font-size', '11px')
-            .attr('fill', 'red')
-            .attr('text-anchor', 'middle');
-
+            .call(updateLabels, xScale, yAxisScale, yScale)             // ... dynamic attributes
+            .call(setupLabels, xScale, yAxisScale, yScale);             // ... static attributes
 
         labels.transition()
             .ease('bounce')
             .delay(125)
             .duration(1000)
-            .call(updateLabels, xScale, yAxisScale, yScale);
+            .call(updateLabels, xScale, yAxisScale, yScale);            // ... dynamic attributes
 
         // let's refresh the vertical axis
         var yAxis = d3.svg.axis();
@@ -202,7 +185,6 @@
               .call(updateBars, xScale, yAxisScale, yScale)
               .attr('width', xScale.rangeBand())                        // ... and have the right width.
               .attr('fill', 'teal');
-              
               
         return bars;
       }
@@ -235,6 +217,15 @@
             });
             
             return labels;
+      }
+      
+      function setupLabels(labels, xScale, yAxisScale, yScale)
+      {
+            labels.attr('width', xScale.rangeBand())                        // ... and have the right width.
+              .attr('font-family', 'sans-serif')
+              .attr('font-size', '11px')
+              .attr('fill', 'red')
+              .attr('text-anchor', 'middle');
       }
 
       // doesn't change input  
