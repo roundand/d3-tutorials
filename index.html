@@ -44,8 +44,9 @@
       d3.csv("data/fruit.csv", pictureThis);
       
       // callback to generate SVG barchart
-      function pictureThis(data){
-        dataSet = data;
+      function pictureThis(csv){
+        dataSet = csv;
+        var data = removeRandomElement(dataSet.slice(0));               // remove one element at random
         console.log(data);
         
         // scaling factors to fit data into our SVG window of h * w
@@ -54,7 +55,7 @@
                         return d.Food;                                  // ... to an array of Food property values
                       }))
                       .rangeRoundBands([axisWidth, w], 0.01);
-        var maxData = d3.max(data, function(d){                         // use the convenient d3.max function ...
+        var maxData = d3.max(dataSet, function(d){                      // use the convenient d3.max function ...
           return +d.Deliciousness;                                      // ... remembering to convert the string value.
         });
         console.log('maxData: ' + maxData);
@@ -63,17 +64,17 @@
         console.log('maxScale: ' + maxScale);
 
         var yScale = d3.scale.linear()
-                       .domain([0, maxData])
-                       .range([0, maxScale]);
+              .domain([0, maxData])
+              .range([0, maxScale]);
         
         var yAxisScale = d3.scale.linear()
-                       .domain([0, maxData])
-                       .range([maxScale, 0]);
+              .domain([0, maxData])
+              .range([maxScale, 0]);
         
         var bars = svg.selectAll('rect')                                // find all svg/rect ...
-                      .data(data)                                       // ... and all data items 
-                      .enter()                                          // ... and for all unmatched items
-                      .append('rect');                                  // ... create a new, matching svg/rect.
+              .data(data, function(d){return d.Food;})                  // ... and all data items 
+              .enter()                                                  // ... and for all unmatched items
+              .append('rect');                                          // ... create a new, matching svg/rect.
         
         bars.attr('x', function(d, i){                                  // for each bar, set x ...
                 return xScale(d.Food);
@@ -90,9 +91,9 @@
             .attr('fill', 'teal');
         
         var labels = svg.selectAll('text')                              // find all svg/text ...
-                        .data(data)                                     // ... and all data items 
-                        .enter()                                        // ... and for all unmatched items
-                        .append('text');                                // ... create a new, matching svg/text.
+            .data(data, function(d){return d.Food;})                    // ... and all data items 
+            .enter()                                                    // ... and for all unmatched items
+            .append('text');                                            // ... create a new, matching svg/text.
         
         labels.attr('x', function(d, i){                                // for each label, set x ...
                 return (xScale(d.Food) + xScale.rangeBand() / 2);       // ... allowing for label centering ...
@@ -120,12 +121,11 @@
             .attr('transform', 'translate(' + axisWidth + ', ' + padding + ')')
             .call(yAxis);
         
+        // and let's have a little interaction
+        var p = d3.select('p');
+        console.log('p: ' + p);
+        p.on('click', updateGraph);
       }
-      
-      // and let's have a little interaction
-      var p = d3.select('p');
-      console.log('p: ' + p);
-      p.on('click', updateGraph);
       
       function updateGraph(){
         var data = updateData(dataSet);
@@ -144,22 +144,47 @@
         console.log('maxScale: ' + maxScale);
 
         var yScale = d3.scale.linear()
-                       .domain([0, maxData])
-                       .range([0, maxScale]);
+              .domain([0, maxData])
+              .range([0, maxScale]);
         
         var yAxisScale = d3.scale.linear()
-                       .domain([0, maxData])
-                       .range([maxScale, 0]);
+              .domain([0, maxData])
+              .range([maxScale, 0]);
         
         var bars = svg.selectAll('rect')                                // find all svg/rect ...
-                      .data(data)                                       // ... and all data items ...
-                      .transition();                                    // ... and keep it smooth
+              .data(data, function(d){return d.Food;});                 // ... and all data items ...
 
+        // exit stage right…
+        bars.exit()
+              .transition()
+              .duration(500)
+              .attr("x", w)
+              .remove();
+            
+        // enter
+        bars.enter()
+              .append('rect')
+              .attr('x', function(d, i){                                // for each bar, set x ...
+                  return xScale(d.Food);
+              })
+              .attr('y', function(d){                                   // ... and y. But SVG uses top-left origin ...
+                return padding + yAxisScale(+d.Deliciousness);          // ... so we adjust for bottom-left chart origin ...
+              })
+              .attr('height', function(d){                              // ... so that all bars are bottom-aligned...
+                var height = yScale(+d.Deliciousness);
+                console.log(d.Deliciousness + ' -> ' + height)
+                return height;
+              })
+              .attr('width', xScale.rangeBand())                        // ... and have the right width.
+              .attr('fill', 'teal');
+
+
+        bars.transition();    
         bars.attr('x', function(d, i){                                  // for each bar, set x ...
                 return xScale(d.Food);
             })
             .attr('y', function(d){                                     // ... and y. But SVG uses top-left origin ...
-              return padding + yAxisScale(+d.Deliciousness);                      // ... so we adjust for bottom-left chart origin ...
+              return padding + yAxisScale(+d.Deliciousness);            // ... so we adjust for bottom-left chart origin ...
             })
             .attr('height', function(d){                                // ... so that all bars are bottom-aligned...
               var height = yScale(+d.Deliciousness);
@@ -168,36 +193,76 @@
             })
 
         var labels = svg.selectAll('text')                              // find all svg/text ...
-                        .data(data)                                     // ... and all data items ...
-                        .transition();
+            .data(data, function(d){return d.Food;});                   // ... and all data items ...
 
-        labels.attr('x', function(d, i){                                // for each label, set x ...
-                return (xScale(d.Food) + xScale.rangeBand() / 2);       // ... allowing for label centering ...
-              })
-                .attr('y', function(d){                                 // ... and y. Flip y as before ...
-                return Math.min(h - padding, padding + yAxisScale(d.Deliciousness));
-              })
-              .text(function(d){                                        // ... and set the label text ...
-                return d.Food;
-              })
+        // exit right ...
+        labels.exit()
+            .transition()
+            .duration(500)
+            .attr("x", w)
+            .remove();
+            
+        // enter
+        labels.enter()
+            .append('text')                                             // ... create a new, matching svg/text.
+            .attr('x', function(d, i){                                  // for each label, set x ...
+              return (xScale(d.Food) + xScale.rangeBand() / 2);         // ... allowing for label centering ...
+            })
+              .attr('y', function(d){                                   // ... and y. Flip y as before ...
+              return Math.min(h - padding, padding + yAxisScale(d.Deliciousness));
+            })
+            .text(function(d){                                          // ... and set the label text ...
+              return d.Food;
+            })
+            .attr('width', xScale.rangeBand())                          // ... and have the right width.
+            .attr('font-family', 'sans-serif')
+            .attr('font-size', '11px')
+            .attr('fill', 'red')
+            .attr('text-anchor', 'middle');
+
+
+        labels.transition()
+            .ease('bounce')
+            .delay(125)
+            .duration(1000)
+            .attr('x', function(d, i){                                // for each label, set x ...
+              return (xScale(d.Food) + xScale.rangeBand() / 2);       // ... allowing for label centering ...
+            })
+              .attr('y', function(d){                                 // ... and y. Flip y as before ...
+              return Math.min(h - padding, padding + yAxisScale(d.Deliciousness));
+            })
+            .text(function(d){                                        // ... and set the label text ...
+              return d.Food;
+            })
               
-        // let's add a vertical axis
+        // let's refresh the vertical axis
         var yAxis = d3.svg.axis();
         yAxis.scale(yAxisScale);
         yAxis.orient('left');
         yAxis.ticks(5);
         
         d3.select('g')
-            .call(yAxis);
-              
+            .call(yAxis)
+            .transition()
+            .call(yAxis)
+            .delay(125);
       }
-      
+
+      // doesn't change input  
       function updateData(data){
         var newData = [];
         data.forEach(function(d){
-          this.push({Food : d.Food, Deliciousness : Math.random() * 10})
+          this.push({Food : d.Food, Deliciousness : Math.round(Math.random() * 10)})
         }, newData);
+        newData = removeRandomElement(newData);
         return newData;
+      }
+      
+      // looking for disposable array as parameter
+      function removeRandomElement(data){
+        var i = Math.floor(Math.random() * data.length);
+        data.splice(i, 1);
+        return data;
       }
     </script>
   </body>
