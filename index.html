@@ -74,22 +74,8 @@
         var bars = svg.selectAll('rect')                                // find all svg/rect ...
               .data(data, function(d){return d.Food;})                  // ... and all data items 
               .enter()                                                  // ... and for all unmatched items
-              .append('rect');                                          // ... create a new, matching svg/rect.
-        
-        bars.attr('x', function(d, i){                                  // for each bar, set x ...
-                return xScale(d.Food);
-            })
-            .attr('y', function(d){                                     // ... and y. But SVG uses top-left origin ...
-              return padding + yAxisScale(+d.Deliciousness);                      // ... so we adjust for bottom-left chart origin ...
-            })
-            .attr('height', function(d){                                // ... so that all bars are bottom-aligned...
-              var height = yScale(+d.Deliciousness);
-              console.log(d.Deliciousness + ' -> ' + height)
-              return height;
-            })
-            .attr('width', xScale.rangeBand())                          // ... and have the right width.
-            .attr('fill', 'teal');
-        
+              .call(setupBars, xScale, yAxisScale, yScale);             // enter - calls common setupBars function with additional paramters as required
+
         var labels = svg.selectAll('text')                              // find all svg/text ...
             .data(data, function(d){return d.Food;})                    // ... and all data items 
             .enter()                                                    // ... and for all unmatched items
@@ -161,36 +147,12 @@
               .attr("x", w)
               .remove();
             
-        // enter
+        // enter - call our common setupBars function with additional parameters as required
         bars.enter()
-              .append('rect')
-              .attr('x', function(d, i){                                // for each bar, set x ...
-                  return xScale(d.Food);
-              })
-              .attr('y', function(d){                                   // ... and y. But SVG uses top-left origin ...
-                return padding + yAxisScale(+d.Deliciousness);          // ... so we adjust for bottom-left chart origin ...
-              })
-              .attr('height', function(d){                              // ... so that all bars are bottom-aligned...
-                var height = yScale(+d.Deliciousness);
-                console.log(d.Deliciousness + ' -> ' + height)
-                return height;
-              })
-              .attr('width', xScale.rangeBand())                        // ... and have the right width.
-              .attr('fill', 'teal');
+              .call(setupBars, xScale, yAxisScale, yScale);
 
-
-        bars.transition();    
-        bars.attr('x', function(d, i){                                  // for each bar, set x ...
-                return xScale(d.Food);
-            })
-            .attr('y', function(d){                                     // ... and y. But SVG uses top-left origin ...
-              return padding + yAxisScale(+d.Deliciousness);            // ... so we adjust for bottom-left chart origin ...
-            })
-            .attr('height', function(d){                                // ... so that all bars are bottom-aligned...
-              var height = yScale(+d.Deliciousness);
-              console.log(d.Deliciousness + ' -> ' + height)
-              return height;
-            })
+        bars.transition()    
+              .call(updateBars, xScale, yAxisScale, yScale);
 
         var labels = svg.selectAll('text')                              // find all svg/text ...
             .data(data, function(d){return d.Food;});                   // ... and all data items ...
@@ -205,15 +167,7 @@
         // enter
         labels.enter()
             .append('text')                                             // ... create a new, matching svg/text.
-            .attr('x', function(d, i){                                  // for each label, set x ...
-              return (xScale(d.Food) + xScale.rangeBand() / 2);         // ... allowing for label centering ...
-            })
-              .attr('y', function(d){                                   // ... and y. Flip y as before ...
-              return Math.min(h - padding, padding + yAxisScale(d.Deliciousness));
-            })
-            .text(function(d){                                          // ... and set the label text ...
-              return d.Food;
-            })
+            .call(updateLabels, xScale, yAxisScale, yScale)
             .attr('width', xScale.rangeBand())                          // ... and have the right width.
             .attr('font-family', 'sans-serif')
             .attr('font-size', '11px')
@@ -225,16 +179,8 @@
             .ease('bounce')
             .delay(125)
             .duration(1000)
-            .attr('x', function(d, i){                                // for each label, set x ...
-              return (xScale(d.Food) + xScale.rangeBand() / 2);       // ... allowing for label centering ...
-            })
-              .attr('y', function(d){                                 // ... and y. Flip y as before ...
-              return Math.min(h - padding, padding + yAxisScale(d.Deliciousness));
-            })
-            .text(function(d){                                        // ... and set the label text ...
-              return d.Food;
-            })
-              
+            .call(updateLabels, xScale, yAxisScale, yScale);
+
         // let's refresh the vertical axis
         var yAxis = d3.svg.axis();
         yAxis.scale(yAxisScale);
@@ -246,6 +192,49 @@
             .transition()
             .call(yAxis)
             .delay(125);
+      }
+      
+      // setupBars - operates on 'this' and returns it, for compatiblity with D3 chaining
+      function setupBars(bars, xScale, yAxisScale, yScale)
+      {
+        console.log('setupBars');
+        bars.append('rect')
+              .call(updateBars, xScale, yAxisScale, yScale)
+              .attr('width', xScale.rangeBand())                        // ... and have the right width.
+              .attr('fill', 'teal');
+              
+              
+        return bars;
+      }
+      
+      function updateBars(bars, xScale, yAxisScale, yScale)
+      {
+        bars.attr('x', function(d, i){                                  // for each bar, set x ...
+                return xScale(d.Food);
+            })
+            .attr('y', function(d){                                     // ... and y. But SVG uses top-left origin ...
+              return padding + yAxisScale(+d.Deliciousness);            // ... so we adjust for bottom-left chart origin ...
+            })
+            .attr('height', function(d){                                // ... so that all bars are bottom-aligned...
+              var height = yScale(+d.Deliciousness);
+              console.log(d.Deliciousness + ' -> ' + height)
+              return height;
+            })
+      }
+
+      function updateLabels(labels, xScale, yAxisScale, yScale)
+      {
+            labels.attr('x', function(d, i){                            // for each label, set x ...
+              return (xScale(d.Food) + xScale.rangeBand() / 2);         // ... allowing for label centering ...
+            })
+            .attr('y', function(d){                                     // ... and y. Flip y as before ...
+              return Math.min(h - padding, padding + yAxisScale(d.Deliciousness));
+            })
+            .text(function(d){                                          // ... and set the label text ...
+              return d.Food;
+            });
+            
+            return labels;
       }
 
       // doesn't change input  
